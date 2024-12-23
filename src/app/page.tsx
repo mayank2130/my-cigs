@@ -32,10 +32,12 @@ const LocationFetcher: React.FC = () => {
     setLoading(true);
     navigator.geolocation.getCurrentPosition(
       (position) => {
-        setCoordinates({
+        const coords = {
           lat: position.coords.latitude,
           lon: position.coords.longitude,
-        });
+        };
+        setCoordinates(coords);
+        localStorage.setItem("coordinates", JSON.stringify(coords));
         setLoading(false);
       },
       () => {
@@ -79,7 +81,9 @@ const LocationFetcher: React.FC = () => {
         }
       );
 
-      setAqi(response.data.indexes[0].aqi);
+      const fetchedAqi = response.data.indexes[0].aqi;
+      setAqi(fetchedAqi);
+      localStorage.setItem("aqi", fetchedAqi.toString());
       setError("");
     } catch (err) {
       console.error("API Error:", err);
@@ -92,11 +96,22 @@ const LocationFetcher: React.FC = () => {
   };
 
   useEffect(() => {
-    requestLocation();
+    const storedCoordinates = localStorage.getItem("coordinates");
+    const storedAqi = localStorage.getItem("aqi");
+
+    if (storedCoordinates) {
+      setCoordinates(JSON.parse(storedCoordinates));
+    } else {
+      requestLocation();
+    }
+
+    if (storedAqi) {
+      setAqi(parseInt(storedAqi, 10));
+    }
   }, []);
 
   useEffect(() => {
-    if (coordinates) {
+    if (coordinates && !aqi) {
       fetchAQI();
     }
   }, [coordinates]);
